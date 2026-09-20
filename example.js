@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         AI Helper V15 (Direct Connect + MCQ + TF)
+// @name         AI Helper V16 (Direct API + GPT-4o-mini)
 // @namespace    ai-helper
-// @version      15.0
-// @description  Stealth button + MCQ + True/False. Direct API keys in script. Vyceai (deepseek-v4.1) > xKiro (qwen3.8-omni) > Gemini (2.5-flash)
+// @version      16.0
+// @description  Stealth button. Priority: OpenAI (gpt-4o-mini) > Gemini (gemini-3.8-flash) > xKiro (qwen3.8-omni)
 // @match        *://*/*
 // @run-at       document-idle
 // ==/UserScript==
@@ -10,10 +10,10 @@
 (function () {
   'use strict';
 
-  // ================== API KEYS (direct connect, no proxy) ==================
-  const VYCEAI_KEY = 'sk-ed1502b80fbe2563e3e6909252a38aa39911e8752e30e196';
-  const VYCEAI_BASE = 'https://vyceai.com/v1';
-  const VYCEAI_MODEL = 'deepseek-v4.1';
+  // ================== API KEYS (direct connect) ==================
+  const OPENAI_KEY = 'sk-ed1502b80fbe2563e3e6909252a38aa39911e8752e30e196';
+  const OPENAI_BASE = 'https://api.openai.com/v1';
+  const OPENAI_MODEL = 'gpt-4o-mini';
 
   const XKIRO_KEYS = [
     'sk-xt-6d69f74ba3d4cbdd07e98c0bdaedbdc5c341e2ac859e999f',
@@ -35,7 +35,7 @@
     'AIzaSyDoor7IhE7rCg3nMHauHpnDTYTx23XIIs8',
     'AIzaSyBNqGTlXhBvs6U8w8oRDlRQOoKTNPr51b4',
     'AIzaSyBKBrbdFlcgb6hslbDxhuf6c00dw-K4UHk',
-    'AIzaSyCfN_q2Rerd8Bt1lnFCSTpznXXecK8vQ1A',
+    'AIzaSyCfN_q2Rerd8Bt1lnFCSTpznXXecK8vQIA',
     'AIzaSyCaxXcdEMCZCqmmPRnej-G7PKl8XWNaL3Q',
     'AIzaSyBKIFN4yYsUaFCnExfBnlGC3dXs4OAmX0c',
     'AIzaSyB3ozEa5opf4hLgyGL89qrOupboYySYoT8',
@@ -55,21 +55,7 @@
   ];
   const GEMINI_MODEL = 'gemini-3.8-flash';
 
-  const PROMPT = `Bạn là Chuyên gia giải đề thi Quốc gia với độ chính xác tuyệt đối. Trả lời bằng tiếng Việt.
-
-QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
-1. Bắt đầu bằng thẻ <thinking>: Phân tích kỹ từng từ ngữ trong đoạn văn.
-2. PHẢN BIỆN: Tìm mọi lý do để chứng minh phát biểu là Sai. Nếu không có, kết luận ĐÚNG. Cảnh giác trạng từ bẫy.
-3. KẾT LUẬN: Ghi "===ANSWER===" và đưa ra chuỗi Đ/S/A/B/C/D.
-
-ĐỊNH DẠNG:
-- Trắc nghiệm: chữ cái (A)
-- Đúng/Sai: chuỗi (Đ S Đ S)
-- Word Form: từ duy nhất (successful)
-- Verb form: động từ (went)
-- Không giải thích. Không emoji.`;
-
-  // ================= PROMPT CONFIG ==================
+  const PROMPT = "Bạn là Chuyên gia giải đề thi Quốc gia. Trả lời bằng tiếng Việt.\nQUY TRÌNH: Phân tích logic, tìm mọi lý do để chứng minh phát biểu Sai.\nKết quả: Ghi ===ANSWER=== và chuỗi Đ/S/A/B/C/D.\nĐỊNH DẠNG: MCQ=A, Đ/S=Đ S, Word Form=từ, Verb form=động từ. Không giải thích.";
 
   // ================= ROOT =================
   const host = document.createElement('div');
@@ -107,7 +93,7 @@ QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
 
   // ================= BUTTON =================
   const btn = document.createElement('div');
-  btn.textContent = '🤖';
+  btn.textContent = 'GPT-4o-mini';
   btn.style.cssText = `
     position: fixed;
     bottom: 18px;
@@ -145,13 +131,6 @@ QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
     }
   }
 
-  let lastModel = '';
-  function setModelStatus(model, ok) {
-    lastModel = ok ? model : lastModel;
-    btn.textContent = ok ? '✓\n' + model : lastModel ? '✓\n' + lastModel : '❌\nOffline';
-    btn.style.color = ok ? '#000' : '#ff4444';
-  }
-
   // ================= SELECTION =================
   let selectedText = '';
   let visible = true;
@@ -181,7 +160,7 @@ QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
     if (isMCQ(text)) return false;
     if (/đúng\s*(hay|hoặc|\/)\s*sai|đúng.*sai|true.*false|T\s*\/\s*F|✓.*✗|☑|☐/i.test(text)) return true;
     if (/(xác|nhận|phát biểu|câu).*(đúng|sai)/i.test(text)) return true;
-    var markers = text.match(/^\s*([\d]+[\.\.\)]\s|[a-d][\.\.\)]\s|-\s|\u2022\s|[\u2713\u2717]\s)/gmi);
+    var markers = text.match(/^\s*([\d]+[\.\.\)]\s|[a-d][\.\.\)]\s|-\s|•\s|[✓✗]\s)/gmi);
     if (markers && markers.length >= 2) return true;
     if (text.includes('Câu trả lời của bạn:')) {
       var parts = text.split('Câu trả lời của bạn:');
@@ -190,7 +169,7 @@ QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
     return false;
   }
   function countStatements(text) {
-    var m = text.match(/^\s*([\d]+[\.\.\)]\s|[a-d][\.\.\)]\s|-\s|\u2022\s)/gmi);
+    var m = text.match(/^\s*([\d]+[\.\.\)]\s|[a-d][\.\.\)]\s|-\s|•\s)/gmi);
     if (m && m.length >= 2) return m.length;
     var lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 20);
     if (lines.length > 4) return 4;
@@ -277,10 +256,10 @@ QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
   let xkiroIdx = 0;
   let geminiIdx = 0;
 
-  async function tryVyceai(text) {
+  async function tryOpenAI(text) {
     try {
-      const answer = await callOpenAICompat(VYCEAI_BASE, VYCEAI_KEY, VYCEAI_MODEL, text);
-      return { answer: extractAnswer(answer), provider: 'vyceai', model: VYCEAI_MODEL };
+      const answer = await callOpenAICompat(OPENAI_BASE, OPENAI_KEY, OPENAI_MODEL, text);
+      return { answer: extractAnswer(answer), provider: 'openai', model: OPENAI_MODEL };
     } catch (e) {
       return null;
     }
@@ -314,10 +293,11 @@ QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
     return null;
   }
 
+  // Priority: OpenAI > Gemini > xKiro
   async function askProvider(text) {
-    let result = await tryXkiro(text);
+    let result = await tryOpenAI(text);
     if (!result) result = await tryGemini(text);
-    if (!result) result = await tryVyceai(text);
+    if (!result) result = await tryXkiro(text);
     return result;
   }
 
@@ -337,7 +317,7 @@ QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
 
     askProvider(prompt)
     .then(d => {
-      if (!d) { show('❌ All providers failed', 3000); setModelStatus(null, false); return; }
+      if (!d) { show('❌ All providers failed', 3000); return; }
 
       let ans = d.answer;
       if (ans.includes('===ANSWER===')) {
@@ -353,15 +333,13 @@ QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
         icon = '📝';
       }
 
-      // Update button with model name + success
-      setModelStatus(d.model, true);
+      btn.textContent = d.model;
 
       const tag = '\n[' + d.model + ']';
       show(icon + ' ' + ans + tag, 12000);
     })
     .catch(() => {
       show('❌ Error', 3000);
-      setModelStatus(null, false);
     });
   }
 
@@ -401,9 +379,11 @@ QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
   async function initCheck() {
     const result = await askProvider('test: 1+1');
     if (result && result.model) {
-      setModelStatus(result.model, true);
+      btn.textContent = result.model;
+      btn.style.color = '#000';
     } else {
-      setModelStatus(null, false);
+      btn.textContent = '❌ Offline';
+      btn.style.color = '#ff4444';
       show('❌ All providers offline', 3000);
     }
   }
