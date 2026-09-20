@@ -225,6 +225,14 @@ KHÔNG giải thích.\n\n${text}`
     };
   }
 
+  // ================= MODEL HELPERS =================
+  function getModelShort(model) {
+    if (model.includes('deepseek')) return 'DeepSeek';
+    if (model.includes('qwen')) return 'Qwen';
+    if (model.includes('gemini')) return 'Gemini';
+    return model.split('/').pop().substring(0, 8);
+  }
+
   // ================= ASK =================
   function ask(text) {
     if (!text || text.length < 5) {
@@ -265,10 +273,13 @@ KHÔNG giải thích.\n\n${text}`
         icon = '📝';
       }
 
-      // Hiện model
-      const tag = d.model ? '\n[' + d.model + ']' : '';
-      if (d.model && d.model !== lastModel) lastModel = d.model;
+      // Hiện model trên button
+      if (d.model) {
+        lastModel = d.model;
+        btn.textContent = getModelShort(d.model);
+      }
 
+      const tag = d.model ? '\n[' + d.model + ']' : '';
       show(icon + ' ' + ans + tag, 12000);
     })
     .catch(() => show('❌ Lỗi server', 3000));
@@ -318,6 +329,7 @@ KHÔNG giải thích.\n\n${text}`
   .then(d => {
     if (d.model) {
       lastModel = d.model;
+      btn.textContent = getModelShort(d.model);
       show('✅ ' + d.model, 3000);
     } else if (d.error) {
       show('❌ ' + d.error, 3000);

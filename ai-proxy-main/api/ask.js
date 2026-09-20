@@ -5,7 +5,7 @@
 // Provider priority chain:
 //   1. Vyceai.com  (deepseek-v4.1)        - main
 //   2. xKiro.com   (qwen/qwen3.8-omni-flash:free) - first fallback
-//   3. Gemini      (gemini-3.8-flash)             - second fallback
+//   3. Gemini      (gemini-2.5-flash)             - second fallback
 //
 // Original repo: https://github.com/Erik9910x/ai-proxy
 
@@ -27,50 +27,20 @@ S Đ S Đ`;
 
 // --- Vyceai.com (main) ---
 const VYCEAI_BASE = 'https://vyceai.com/v1';
-const VYCEAI_KEY = process.env.VYCEAI_KEY || 'sk-ed1502b80fbe2563e3e6909252a38aa39911e8752e30e196';
+const VYCEAI_KEY = process.env.VYCEAI_API_KEY;
 const VYCEAI_MODEL = 'deepseek-v4.1';
 
 // --- xKiro.com (first fallback) ---
 const XKIRO_BASE = 'https://api.xkiro.com/v1';
 const XKIRO_KEYS = [
-  'sk-xt-6d69f74ba3d4cbdd07e98c0bdaedbdc5c341e2ac859e999f',
-  'sk-xt-761159ee43b589549f217dd12d6a325f92050df8068435d0',
-];
+  process.env.XKIRO_API_KEY,
+  process.env.XKIRO_API_KEY_2,
+].filter(Boolean);
 const XKIRO_MODEL = 'qwen/qwen3.8-omni-flash:free';
 
 // --- Gemini (second fallback) ---
-const GEMINI_KEYS = [
-  'AIzaSyBN_keLh-b6DnTiwV4IP_NoIs5JeQ9UAi4',
-  'AIzaSyD7pZOv7-RO2IdY38afJKmbLbsX5mULgGo',
-  'AIzaSyDme7JjplDY5XwL7z7G-kGPEqfLK0fEMzI',
-  'AIzaSyAjfV6Brj_OSmmxxCSeopbrKl7IlVJyvnU',
-  'AIzaSyAGUlSxUcTSvuAf651RBO5UYbgjEk-4ano',
-  'AIzaSyArcvNYSfZSJcSmS3ucMcAhGy-PrtPMLGU',
-  'AIzaSyDyWAWLcho5AducjM4bJ0_kxd06m1SaanQ',
-  'AIzaSyAYLiPIbofRolv73OHB7N-9lpP5RKvAfyw',
-  'AIzaSyBTHg-7jfI2B70nP9mo2I12KOjUf5amdvE',
-  'AIzaSyDoor7IhE7rCg3nMHauHpnDTYTx23XIIs8',
-  'AIzaSyBNqGTlXhBvs6U8w8oRDlRQOoKTNPr51b4',
-  'AIzaSyBKBrbdFlcgb6hslbDxhuf6c00dw-K4UHk',
-  'AIzaSyCfN_q2Rerd8Bt1lnFCSTpznXXecK8vQIA',
-  'AIzaSyCaxXcdEMCZCqmmPRnej-G7PKl8XWNaL3Q',
-  'AIzaSyBKIFN4yYsUaFCnExfBnlGC3dXs4OAmX0c',
-  'AIzaSyB3ozEa5opf4hLgyGL89qrOupboYySYoT8',
-  'AIzaSyCJ-CR-z6JnRCwynYugxT9MwxiebCzQtvw',
-  'AIzaSyAP1aCdxRGh_73A2tutboMGKu2CrIzwx7s',
-  'AIzaSyCZqjHhGuf59WRvdkbhQHyj3hxnNuV9Mr4',
-  'AIzaSyBBPvRcqXiiv-K-dDtkwF9YSsgd0TS6d9g',
-  'AIzaSyCFwGCJL5I8VCvrZUhT1h4M7fg80b7dH4A',
-  'AIzaSyDLAL4ra3ZLVBWMlOVAacJk6t0800TrGOA',
-  'AIzaSyDFOYiVt1a9WKCdn5Lh2SGpixlxCoYzIzs',
-  'AIzaSyAHw4tJhNIteV6m1KJ2UyavBtw90ZNH8iA',
-  'AIzaSyBezRaVONaAx0OQ5yJIprfqGatwi8YyOAM',
-  'AIzaSyDCxpguXtG8yt2pq-64GFBVXgMJETEej64',
-  'AIzaSyD3vptTqP5x5daJRNXdfZCz1t8NzPxDLSw',
-  'AIzaSyB3Ob7zDObdzAxYjcMirlxc3cP77pQG0S4',
-  'AIzaSyAMqJk0GCdhbxheF-RbCCb5QEo-laVXyic',
-];
-const GEMINI_MODEL = 'gemini-3.8-flash';
+const GEMINI_KEYS = (process.env.GEMINI_API_KEYS || '').split(',').filter(Boolean);
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 // Round-robin state (in-memory, resets on cold start — OK for free tier)
 let xkiroIdx = 0;
