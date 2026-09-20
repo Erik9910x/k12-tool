@@ -94,13 +94,14 @@ async function tryXkiro(text) {
       const answer = await callOpenAICompat(XKIRO_BASE, key, XKIRO_MODEL, text);
       return { answer: extractAnswer(answer), provider: 'xkiro', model: XKIRO_MODEL };
     } catch (e) {
+      if (e.message === '429') break;
       continue;
     }
   }
   return null;
 }
 
-// --- Provider 3: Gemini (gemini-3.8-flash) ---
+// --- Provider 3: Gemini (gemini-2.5-flash) ---
 async function tryGemini(text) {
   for (let attempt = 0; attempt < GEMINI_KEYS.length; attempt++) {
     const key = GEMINI_KEYS[geminiIdx % GEMINI_KEYS.length];
@@ -121,6 +122,7 @@ async function tryGemini(text) {
       const answer = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
       if (answer) return { answer: extractAnswer(answer), provider: 'gemini', model: GEMINI_MODEL };
     } catch (e) {
+      if (e.message === '429' || /429/.test(e.message)) break;
       continue;
     }
   }
@@ -138,20 +140,11 @@ module.exports = async function handler(req, res) {
   const { text, type } = req.body || {};
   if (!text || text.length < 5) return res.status(400).json({ error: 'Text too short' });
 
-  let result = null;
-
-  // Routing theo loại câu hỏi
-  if (type === 'tf') {
-    // Đúng/Sai -> Vyceai first (deepseek-v4.1, logic cực mạnh)
-    result = await tryVyceai(text);
-    if (!result) result = await tryXkiro(text);
-    if (!result) result = await tryGemini(text);
-  } else {
-    // Trắc nghiệm (ABCD), Wordform, trả lời ngắn -> Vyceai first
-    result = await tryVyceai(text);
-    if (!result) result = await tryXkiro(text);
-    if (!result) result = await tryGemini(text);
-  }
+  // Priority: Vyceai > xKiro > Gemini (same order for all question types)
+  // deepseek-v4.1 excels at all formats — MCQ, True/False, Word Form, Verb Form
+  const result = await tryVyceai(text)
+    || await tryXkiro(text)
+    || await tryGemini(text);
 
   if (result) {
     return res.status(200).json(result);
