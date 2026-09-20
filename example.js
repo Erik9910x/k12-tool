@@ -316,8 +316,8 @@ QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
 
   async function askProvider(text) {
     let result = await tryXkiro(text);
-    if (!result) result = await tryVyceai(text);
     if (!result) result = await tryGemini(text);
+    if (!result) result = await tryVyceai(text);
     return result;
   }
 
