@@ -53,7 +53,7 @@
     'AIzaSyB3Ob7zDObdzAxYjcMirlxc3cP77pQG0S4',
     'AIzaSyAMqJk0GCdhbxheF-RbCCb5QEo-laVXyic',
   ];
-  const GEMINI_MODEL = 'gemini-2.5-flash';
+  const GEMINI_MODEL = 'gemini-3.8-flash';
 
   const PROMPT = `Bạn là Chuyên gia giải đề thi Quốc gia với độ chính xác tuyệt đối. Trả lời bằng tiếng Việt.
 
