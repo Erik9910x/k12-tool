@@ -145,8 +145,10 @@ QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
     }
   }
 
+  let lastModel = '';
   function setModelStatus(model, ok) {
-    btn.textContent = ok ? '✓\n' + model : '❌\n' + (model || 'ERR');
+    lastModel = ok ? model : lastModel;
+    btn.textContent = ok ? '✓\n' + model : lastModel ? '✓\n' + lastModel : '❌\nOffline';
     btn.style.color = ok ? '#000' : '#ff4444';
   }
 
@@ -313,8 +315,8 @@ QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
   }
 
   async function askProvider(text) {
-    let result = await tryVyceai(text);
-    if (!result) result = await tryXkiro(text);
+    let result = await tryXkiro(text);
+    if (!result) result = await tryVyceai(text);
     if (!result) result = await tryGemini(text);
     return result;
   }
@@ -400,7 +402,6 @@ QUY TRÌNH XỬ LÝ "SIÊU LOGIC":
     const result = await askProvider('test: 1+1');
     if (result && result.model) {
       setModelStatus(result.model, true);
-      show('✅ ' + result.model, 3000);
     } else {
       setModelStatus(null, false);
       show('❌ All providers offline', 3000);
